@@ -1,0 +1,7 @@
+.vscode/
+*~
+
+# for cmake out-of-source build dir
+build/
+release/
+debug/
