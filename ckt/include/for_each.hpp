@@ -1,54 +1,46 @@
 #pragma once
 
-//#ifdef __GNUG__
-//#endif
-#include <thrust/tuple.h>
+ #include <thrust/tuple.h>
 #include <nvfunctional>
 #include <typeinfo>
 #include "kernel.hpp"
 #include "policy.hpp"
 
 namespace ckt {
-  //template <int groupsize>
-
   /*!
    * The for_each kernel template for simple kernels that do not use shared memory
-   * 
    */
-  template <template <int, bool> class Policy, int groupsize, int need_sync, class Fn, class... Args>
+  template <template <bool> class Policy, int groupsize, int need_sync, class Fn, class... Args>
   static __global__ void for_each_kernel(int N, Args... args)
   {
     int max_id = blockDim.x * gridDim.x;
-    int id = threadIdx.x+blockDim.x*blockIdx.x; 
+    int id = threadIdx.x + blockDim.x*blockIdx.x; 
     ForEach<Policy, groupsize, need_sync> fe(N, id, max_id);
     int stride = fe.get_stride();
 
-    thrust::tuple<Args...> tuple (args...);
-      int batches = fe.num_batches();
+    thrust::tuple<Args...> tuple(args...);
+    int batches = fe.num_batches();
 
-    Fn _method; 
+    Fn _operator; 
 
     while (fe.not_last_batch()) {
-        {
-          _method(fe.get_id(), tuple);
-        }
-        fe.next_batch();
+      _operator(fe.get_id(), tuple);
+      fe.next_batch();
     }
 
     while (fe.not_done()) {
       if (fe.is_active(N))
-        {
-          _method(fe.get_id(), tuple);
-        }
+      {
+        _operator(fe.get_id(), tuple);
+      }
       fe.next_batch();
     }
   }
 
-
   /*!
    * A template for each kernel class that does not use shared memorya
    */ 
-  template <template<int, bool> class Policy, int group_size, bool need_sync>
+  template <template<bool> class Policy, int group_size, bool need_sync>
   class ForEachKernel: public CudaKernel {
   public: 
     ForEachKernel(int32_t _N, const std::string &tag): m_N(_N), CudaKernel(tag) {

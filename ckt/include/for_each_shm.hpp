@@ -9,7 +9,7 @@
 #include "policy.hpp"
 
 namespace ckt {
-  template <template <int, bool> class Policy, int groupsize, int need_sync, class Fn, class Shared_T, int SharedSize, class... Args>
+  template <template <bool> class Policy, int groupsize, int need_sync, class Fn, class Shared_T, int SharedSize, class... Args>
   static __global__ void for_each_shm_kernel(int N, Args... args)
   {
     //    Shared_T sh_item[SharedSize];
@@ -44,7 +44,7 @@ namespace ckt {
   /*!
    * A template kernel class that uses shared memory
    */
-  template <template<int, bool> class Policy, int group_size, bool need_sync>
+  template <template<bool> class Policy, int group_size, bool need_sync>
   class ForEachShmKernel: public CudaKernel {
   public: 
     explicit ForEachShmKernel(int32_t _N, const std::string &tag): m_N(_N), CudaKernel(tag) {
